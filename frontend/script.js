@@ -4,7 +4,7 @@ const expenseList = document.getElementById("expense-list");
 
 // ---------- INITIALIZE ----------
 let expenses = [];
-let editExpenseId = null; // Global variable to track editing state
+let editExpenseId = null; // Track editing via form (optional, not used in inline editing)
 
 // ---------- ADD or UPDATE EXPENSE ----------
 expenseForm.addEventListener("submit", (e) => {
@@ -21,31 +21,15 @@ expenseForm.addEventListener("submit", (e) => {
     return;
   }
 
-  if (editExpenseId) {
-    // Update existing expense
-    const idx = expenses.findIndex(exp => exp.id === editExpenseId);
-    if (idx >= 0) {
-      expenses[idx] = {
-        id: editExpenseId,
-        title,
-        amount: parseFloat(amount.toFixed(2)),
-        paidBy,
-        date,
-      };
-    }
-    editExpenseId = null;
-    expenseForm.querySelector("button[type=submit]").textContent = "Add Expense";
-  } else {
-    // Add new expense
-    const expense = {
-      id: Date.now(),
-      title,
-      amount: parseFloat(amount.toFixed(2)),
-      paidBy,
-      date,
-    };
-    expenses.push(expense);
-  }
+  // Add new expense
+  const expense = {
+    id: Date.now(),
+    title,
+    amount: parseFloat(amount.toFixed(2)),
+    paidBy,
+    date,
+  };
+  expenses.push(expense);
 
   saveExpenses();
   renderExpenses();
@@ -65,13 +49,14 @@ function renderExpenses() {
 
   expenses.forEach((exp) => {
     const li = document.createElement("li");
+    li.setAttribute("data-id", exp.id);
     li.innerHTML = `
       <div>
         <strong>${exp.title}</strong> - ₹${exp.amount.toFixed(2)}<br>
         <small>Paid by: ${exp.paidBy} | ${exp.date}</small>
       </div>
       <div>
-        <button class="edit-btn" onclick="startEditExpense(${exp.id})">✏️</button>
+        <button onclick="enableInlineEdit(${exp.id})">✏️ Edit</button>
         <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑</button>
       </div>
     `;
@@ -82,18 +67,48 @@ function renderExpenses() {
   renderBalances();
 }
 
-// ---------- START EDITING EXPENSE ----------
-function startEditExpense(id) {
-  const exp = expenses.find(e => e.id === id);
-  if (!exp) return;
+// ---------- INLINE EDITING ----------
+function enableInlineEdit(expenseId) {
+  const li = document.querySelector(`li[data-id='${expenseId}']`);
+  if (!li) return;
 
-  document.getElementById("title").value = exp.title;
-  document.getElementById("amount").value = exp.amount;
-  document.getElementById("paidBy").value = exp.paidBy;
-  document.getElementById("date").value = exp.date;
+  const expense = expenses.find(e => e.id === expenseId);
+  if (!expense) return;
 
-  editExpenseId = id;
-  expenseForm.querySelector("button[type=submit]").textContent = "Update Expense";
+  li.innerHTML = `
+    <input type="text" id="edit-title-${expenseId}" value="${expense.title}" placeholder="Title" />
+    <input type="number" id="edit-amount-${expenseId}" value="${expense.amount.toFixed(2)}" placeholder="Amount" />
+    <input type="text" id="edit-paidBy-${expenseId}" value="${expense.paidBy}" placeholder="Paid By" />
+    <input type="date" id="edit-date-${expenseId}" value="${expense.date}" />
+    <button onclick="saveInlineEdit(${expenseId})">Save</button>
+    <button onclick="renderExpenses()">Cancel</button>
+  `;
+}
+
+function saveInlineEdit(expenseId) {
+  const title = document.getElementById(`edit-title-${expenseId}`).value.trim();
+  const amountStr = document.getElementById(`edit-amount-${expenseId}`).value;
+  const amount = parseFloat(amountStr);
+  const paidBy = document.getElementById(`edit-paidBy-${expenseId}`).value.trim();
+  const date = document.getElementById(`edit-date-${expenseId}`).value;
+
+  if (!title || !paidBy || !date || isNaN(amount) || amount <= 0) {
+    alert("⚠ Please fill all fields correctly!");
+    return;
+  }
+
+  const idx = expenses.findIndex(exp => exp.id === expenseId);
+  if (idx >= 0) {
+    expenses[idx] = {
+      id: expenseId,
+      title,
+      amount: parseFloat(amount.toFixed(2)),
+      paidBy,
+      date,
+    };
+    saveExpenses();
+    renderExpenses();
+  }
 }
 
 // ---------- DELETE EXPENSE ----------
@@ -205,23 +220,22 @@ const toggle = document.getElementById("darkModeToggle");
 
 // Load saved preference on page load
 window.addEventListener("DOMContentLoaded", () => {
-  const darkMode = localStorage.getItem("darkMode");
-  if (darkMode === "enabled") {
-    document.body.classList.add("dark-mode");
-    toggle.checked = true;
-  }
+  const darkMode = localStorage.getItem("darkMode");
+  if (darkMode === "enabled") {
+    document.body.classList.add("dark-mode");
+    toggle.checked = true;
+  }
 });
 
 toggle.addEventListener("change", () => {
-  if (toggle.checked) {
-    document.body.classList.add("dark-mode");
-    localStorage.setItem("darkMode", "enabled");
-  } else {
-    document.body.classList.remove("dark-mode");
-    localStorage.setItem("darkMode", "disabled");
-  }
+  if (toggle.checked) {
+    document.body.classList.add("dark-mode");
+    localStorage.setItem("darkMode", "enabled");
+  } else {
+    document.body.classList.remove("dark-mode");
+    localStorage.setItem("darkMode", "disabled");
+  }
 });
-
 
 // ---------- INIT APP ----------
 loadExpenses();
