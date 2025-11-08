@@ -4,7 +4,7 @@ const expenseList = document.getElementById("expense-list");
 
 // ---------- INITIALIZE ----------
 let expenses = [];
-let editExpenseId = null; // Track editing via form (optional, not used in inline editing)
+let editExpenseId = null; // Global variable to track editing state
 
 // ---------- ADD or UPDATE EXPENSE ----------
 expenseForm.addEventListener("submit", (e) => {
@@ -21,20 +21,116 @@ expenseForm.addEventListener("submit", (e) => {
     return;
   }
 
-  // Add new expense
-  const expense = {
-    id: Date.now(),
-    title,
-    amount: parseFloat(amount.toFixed(2)),
-    paidBy,
-    date,
-  };
-  expenses.push(expense);
+  if (editExpenseId) {
+    const idx = expenses.findIndex(exp => exp.id === editExpenseId);
+    if (idx >= 0) {
+      expenses[idx] = {
+        id: editExpenseId,
+        title,
+        amount: parseFloat(amount.toFixed(2)),
+        paidBy,
+        date,
+      };
+    }
+    editExpenseId = null;
+    expenseForm.querySelector("button[type=submit]").textContent = "Add Expense";
+  } else {
+    const expense = {
+      id: Date.now(),
+      title,
+      amount: parseFloat(amount.toFixed(2)),
+      paidBy,
+      date,
+    };
+    expenses.push(expense);
+  }
 
   saveExpenses();
   renderExpenses();
   expenseForm.reset();
 });
+
+// ---------- DRAG AND DROP HANDLERS ----------
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+  this.style.opacity = '0.4';
+  dragSrcEl = this;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+
+  const bounding = this.getBoundingClientRect();
+  const offset = e.clientY - bounding.top;
+
+  if (offset > bounding.height / 2) {
+    this.style['border-bottom'] = '4px solid #2196f3';
+    this.style['border-top'] = '';
+  } else {
+    this.style['border-top'] = '4px solid #2196f3';
+    this.style['border-bottom'] = '';
+  }
+
+  return false;
+}
+
+function handleDragEnter() {
+  this.classList.add('over');
+}
+
+function handleDragLeave() {
+  this.classList.remove('over');
+  this.style['border-top'] = '';
+  this.style['border-bottom'] = '';
+}
+
+function handleDrop(e) {
+  e.stopPropagation();
+
+  let items = document.querySelectorAll('#expense-list li');
+  items.forEach(item => {
+    item.style['border-top'] = '';
+    item.style['border-bottom'] = '';
+    item.classList.remove('over');
+  });
+
+  if (dragSrcEl !== this) {
+    let srcId = dragSrcEl.getAttribute('data-id');
+    let targetId = this.getAttribute('data-id');
+
+    const bounding = this.getBoundingClientRect();
+    const offset = e.clientY - bounding.top;
+
+    let srcIndex = expenses.findIndex(exp => exp.id == srcId);
+    let targetIndex = expenses.findIndex(exp => exp.id == targetId);
+
+    if (srcIndex >= 0 && targetIndex >= 0) {
+      const movedItem = expenses.splice(srcIndex, 1)[0];
+      if (offset > bounding.height / 2) {
+        expenses.splice(targetIndex + 1, 0, movedItem);
+      } else {
+        expenses.splice(targetIndex, 0, movedItem);
+      }
+      saveExpenses();
+      renderExpenses();
+    }
+  }
+  return false;
+}
+
+function handleDragEnd() {
+  this.style.opacity = '1';
+  let items = document.querySelectorAll('#expense-list li');
+  items.forEach(item => {
+    item.classList.remove('over');
+    item.style['border-top'] = '';
+    item.style['border-bottom'] = '';
+  });
+}
 
 // ---------- RENDER EXPENSES ----------
 function renderExpenses() {
@@ -50,16 +146,25 @@ function renderExpenses() {
   expenses.forEach((exp) => {
     const li = document.createElement("li");
     li.setAttribute("data-id", exp.id);
+    li.setAttribute("draggable", true);
     li.innerHTML = `
       <div>
         <strong>${exp.title}</strong> - ₹${exp.amount.toFixed(2)}<br>
         <small>Paid by: ${exp.paidBy} | ${exp.date}</small>
       </div>
       <div>
-        <button onclick="enableInlineEdit(${exp.id})">✏️ Edit</button>
+        <button class="edit-btn" onclick="startEditExpense(${exp.id})">✏️</button>
         <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑</button>
       </div>
     `;
+
+    li.addEventListener('dragstart', handleDragStart, false);
+    li.addEventListener('dragenter', handleDragEnter, false);
+    li.addEventListener('dragover', handleDragOver, false);
+    li.addEventListener('dragleave', handleDragLeave, false);
+    li.addEventListener('drop', handleDrop, false);
+    li.addEventListener('dragend', handleDragEnd, false);
+
     expenseList.appendChild(li);
   });
 
@@ -67,48 +172,18 @@ function renderExpenses() {
   renderBalances();
 }
 
-// ---------- INLINE EDITING ----------
-function enableInlineEdit(expenseId) {
-  const li = document.querySelector(`li[data-id='${expenseId}']`);
-  if (!li) return;
+// ---------- START EDITING EXPENSE ----------
+function startEditExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) return;
 
-  const expense = expenses.find(e => e.id === expenseId);
-  if (!expense) return;
+  document.getElementById("title").value = exp.title;
+  document.getElementById("amount").value = exp.amount;
+  document.getElementById("paidBy").value = exp.paidBy;
+  document.getElementById("date").value = exp.date;
 
-  li.innerHTML = `
-    <input type="text" id="edit-title-${expenseId}" value="${expense.title}" placeholder="Title" />
-    <input type="number" id="edit-amount-${expenseId}" value="${expense.amount.toFixed(2)}" placeholder="Amount" />
-    <input type="text" id="edit-paidBy-${expenseId}" value="${expense.paidBy}" placeholder="Paid By" />
-    <input type="date" id="edit-date-${expenseId}" value="${expense.date}" />
-    <button onclick="saveInlineEdit(${expenseId})">Save</button>
-    <button onclick="renderExpenses()">Cancel</button>
-  `;
-}
-
-function saveInlineEdit(expenseId) {
-  const title = document.getElementById(`edit-title-${expenseId}`).value.trim();
-  const amountStr = document.getElementById(`edit-amount-${expenseId}`).value;
-  const amount = parseFloat(amountStr);
-  const paidBy = document.getElementById(`edit-paidBy-${expenseId}`).value.trim();
-  const date = document.getElementById(`edit-date-${expenseId}`).value;
-
-  if (!title || !paidBy || !date || isNaN(amount) || amount <= 0) {
-    alert("⚠ Please fill all fields correctly!");
-    return;
-  }
-
-  const idx = expenses.findIndex(exp => exp.id === expenseId);
-  if (idx >= 0) {
-    expenses[idx] = {
-      id: expenseId,
-      title,
-      amount: parseFloat(amount.toFixed(2)),
-      paidBy,
-      date,
-    };
-    saveExpenses();
-    renderExpenses();
-  }
+  editExpenseId = id;
+  expenseForm.querySelector("button[type=submit]").textContent = "Update Expense";
 }
 
 // ---------- DELETE EXPENSE ----------
