@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Splitter 💰</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Expense Splitter 💰</h1>
+    <p>Track who spent how much and split easily among friends!</p>
+  </header>
+
+  <main>
+    <!-- Add Expense Form -->
+    <section class="form-section">
+      <h2>Add New Expense</h2>
+      <form id="expense-form">
+        <input type="text" id="title" placeholder="Expense Title (e.g. Dinner)" required>
+        <input type="number" id="amount" placeholder="Amount (₹)" required>
+        <input type="text" id="paidBy" placeholder="Paid By (e.g. Ramesh)" required>
+        <input type="date" id="date" required>
+        <button type="submit">Add Expense</button>
+      </form>
+    </section>
+
+    <!-- Expense List -->
+    <section class="list-section">
+      <h2>All Expenses</h2>
+      <ul id="expense-list">
+        <!-- Dynamic list items will be added here using JS -->
+      </ul>
+    </section>
+
+    <!-- Expense Summary -->
+    <section class="summary-section" id="summary">
+      <h2>Expense Summary</h2>
+      <p id="total">Total: ₹0</p>
+      <p id="highest">Highest Spender: -</p>
+      <p id="average">Average per person: ₹0</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Made with ❤️ by the Week 1 Team</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
