@@ -4,8 +4,9 @@ const expenseList = document.getElementById("expense-list");
 
 // ---------- INITIALIZE ----------
 let expenses = [];
+let editExpenseId = null; // Global variable to track editing state
 
-// ---------- ADD EXPENSE ----------
+// ---------- ADD or UPDATE EXPENSE ----------
 expenseForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
@@ -20,15 +21,32 @@ expenseForm.addEventListener("submit", (e) => {
     return;
   }
 
-  const expense = {
-    id: Date.now(),
-    title,
-    amount: parseFloat(amount.toFixed(2)), // keep 2 decimals
-    paidBy,
-    date,
-  };
+  if (editExpenseId) {
+    // Update existing expense
+    const idx = expenses.findIndex(exp => exp.id === editExpenseId);
+    if (idx >= 0) {
+      expenses[idx] = {
+        id: editExpenseId,
+        title,
+        amount: parseFloat(amount.toFixed(2)),
+        paidBy,
+        date,
+      };
+    }
+    editExpenseId = null;
+    expenseForm.querySelector("button[type=submit]").textContent = "Add Expense";
+  } else {
+    // Add new expense
+    const expense = {
+      id: Date.now(),
+      title,
+      amount: parseFloat(amount.toFixed(2)),
+      paidBy,
+      date,
+    };
+    expenses.push(expense);
+  }
 
-  expenses.push(expense);
   saveExpenses();
   renderExpenses();
   expenseForm.reset();
@@ -41,6 +59,7 @@ function renderExpenses() {
   if (expenses.length === 0) {
     expenseList.innerHTML = `<p style="text-align:center; color:#555;">No expenses added yet.</p>`;
     updateSummary();
+    renderBalances();
     return;
   }
 
@@ -48,15 +67,33 @@ function renderExpenses() {
     const li = document.createElement("li");
     li.innerHTML = `
       <div>
-        <strong>${exp.title}</strong> - ₹${exp.amount.toFixed(2)}  
-        <br><small>Paid by: ${exp.paidBy} | ${exp.date}</small>
+        <strong>${exp.title}</strong> - ₹${exp.amount.toFixed(2)}<br>
+        <small>Paid by: ${exp.paidBy} | ${exp.date}</small>
       </div>
-      <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑</button>
+      <div>
+        <button class="edit-btn" onclick="startEditExpense(${exp.id})">✏️</button>
+        <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑</button>
+      </div>
     `;
     expenseList.appendChild(li);
   });
 
   updateSummary();
+  renderBalances();
+}
+
+// ---------- START EDITING EXPENSE ----------
+function startEditExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) return;
+
+  document.getElementById("title").value = exp.title;
+  document.getElementById("amount").value = exp.amount;
+  document.getElementById("paidBy").value = exp.paidBy;
+  document.getElementById("date").value = exp.date;
+
+  editExpenseId = id;
+  expenseForm.querySelector("button[type=submit]").textContent = "Update Expense";
 }
 
 // ---------- DELETE EXPENSE ----------
@@ -89,13 +126,11 @@ function loadExpenses() {
 function updateSummary() {
   const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
-  // Calculate per-person spending
   const spendBy = {};
   expenses.forEach((exp) => {
     spendBy[exp.paidBy] = (spendBy[exp.paidBy] || 0) + exp.amount;
   });
 
-  // Find highest spender
   let highestSpender = "-";
   let maxSpent = 0;
   for (const person in spendBy) {
@@ -114,6 +149,79 @@ function updateSummary() {
   document.getElementById("highest").textContent = `Highest Spender: ${highestSpender} (₹${maxSpent.toFixed(2)})`;
   document.getElementById("average").textContent = `Average per person: ₹${avg}`;
 }
+
+// ---------- BALANCE CALCULATION ----------
+function calculateBalances() {
+  const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  const friends = {};
+  expenses.forEach(exp => {
+    if (!friends[exp.paidBy]) friends[exp.paidBy] = 0;
+    friends[exp.paidBy] += exp.amount;
+  });
+
+  const numFriends = Object.keys(friends).length;
+  const share = numFriends ? total / numFriends : 0;
+
+  const balances = {};
+  for (const friend in friends) {
+    balances[friend] = parseFloat((friends[friend] - share).toFixed(2));
+  }
+
+  return balances;
+}
+
+// ---------- RENDER BALANCES ----------
+function renderBalances() {
+  const balancesList = document.getElementById("balances-list");
+  balancesList.innerHTML = "";
+
+  const balances = calculateBalances();
+
+  if (Object.keys(balances).length === 0) {
+    balancesList.innerHTML = `<p>No expenses added yet to calculate balances.</p>`;
+    return;
+  }
+
+  for (const friend in balances) {
+    const li = document.createElement("li");
+    const balance = balances[friend];
+    let text = "";
+
+    if (balance > 0) {
+      text = `${friend} should receive ₹${balance}`;
+    } else if (balance < 0) {
+      text = `${friend} owes ₹${Math.abs(balance)}`;
+    } else {
+      text = `${friend} is settled up.`;
+    }
+
+    li.textContent = text;
+    balancesList.appendChild(li);
+  }
+}
+
+const toggle = document.getElementById("darkModeToggle");
+
+// Load saved preference on page load
+window.addEventListener("DOMContentLoaded", () => {
+  const darkMode = localStorage.getItem("darkMode");
+  if (darkMode === "enabled") {
+    document.body.classList.add("dark-mode");
+    toggle.checked = true;
+  }
+});
+
+toggle.addEventListener("change", () => {
+  if (toggle.checked) {
+    document.body.classList.add("dark-mode");
+    localStorage.setItem("darkMode", "enabled");
+  } else {
+    document.body.classList.remove("dark-mode");
+    localStorage.setItem("darkMode", "disabled");
+  }
+});
+
 
 // ---------- INIT APP ----------
 loadExpenses();

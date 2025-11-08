@@ -147,6 +147,25 @@ button:hover {
   box-shadow: 0 0 10px rgba(255, 94, 98, 0.5);
 }
 
+.edit-btn {
+  background: #4caf50;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-right: 8px;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-btn:hover {
+  background: #45a049;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+
 /* ---------- SUMMARY ---------- */
 .summary-section {
   margin-top: 2rem;
@@ -163,6 +182,97 @@ button:hover {
 .summary-section p {
   margin: 6px 0;
 }
+
+/* ---------- BALANCES & SETTLEMENTS ---------- */
+.balances-section {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #fbc2eb, #a6c1ee);
+  padding: 1.2rem;
+  border-radius: 15px;
+  text-align: center;
+  color: #1a237e;
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in-out;
+}
+
+.balances-section ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.balances-section li {
+  margin: 8px 0;
+}
+
+/* Toggle switch styling */
+.switch {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196f3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background: #121212;
+  color: #eeeeee;
+}
+
+body.dark-mode header {
+  background: #1f1f1f;
+  color: #eee;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode main {
+  background: #222;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* And so on... */
+
+
 
 /* ---------- FOOTER ---------- */
 footer {
@@ -193,21 +303,17 @@ footer {
   main {
     padding: 1.2rem;
   }
-
   header h1 {
     font-size: 2rem;
   }
-
   input,
   button {
     font-size: 0.95rem;
   }
-
   #expense-list li {
     flex-direction: column;
     align-items: flex-start;
   }
-
   .delete-btn {
     align-self: flex-end;
     margin-top: 5px;
