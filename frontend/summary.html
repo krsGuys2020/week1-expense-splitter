@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Summary & Balances - Expense Splitter 💰</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Expense Splitter 💰</h1>
+    <p>View all expenses, summaries, and balance settlements</p>
+    <label class="switch">
+      <input type="checkbox" id="darkModeToggle" />
+      <span class="slider round"></span>
+      Dark Mode
+    </label>
+    <nav>
+      <a href="index.html" class="nav-link">Home</a> |
+      <a href="summary.html" class="nav-link active">View Summary & Balances</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Expense Summary -->
+    <section class="summary-section" id="summary">
+      <h2>Expense Summary</h2>
+      <p id="total">Total: ₹0</p>
+      <p id="highest">Highest Spender: -</p>
+      <p id="average">Average per person: ₹0</p>
+    </section>
+
+    <!-- Balances & Settlements -->
+    <section class="balances-section" id="balances-section">
+      <h2>Balances & Settlements</h2>
+      <ul id="balances-list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Made with ❤️ by the Week 1 Team</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,54 +1,107 @@
 // ---------- SELECT ELEMENTS ----------
+// Only select elements that exist on the current page
 const expenseForm = document.getElementById("expense-form");
 const expenseList = document.getElementById("expense-list");
+const numPeopleInput = document.getElementById("numPeople");
+const participantsContainer = document.getElementById("participants-container");
+
+// Initialize elements that may not exist on all pages
+if (numPeopleInput) {
+  numPeopleInput.addEventListener("input", updateParticipantFields);
+}
 
 // ---------- INITIALIZE ----------
 let expenses = [];
 let editExpenseId = null; // Global variable to track editing state
 
-// ---------- ADD or UPDATE EXPENSE ----------
-expenseForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+// ---------- DYNAMIC PARTICIPANT FIELDS ----------
+function updateParticipantFields() {
+  if (!numPeopleInput || !participantsContainer) return;
 
-  const title = document.getElementById("title").value.trim();
-  const amount = parseFloat(document.getElementById("amount").value);
-  const paidBy = document.getElementById("paidBy").value.trim();
-  const date = document.getElementById("date").value;
+  const numPeople = parseInt(numPeopleInput.value) || 0;
+  participantsContainer.innerHTML = "";
 
-  // Validation
-  if (!title || !paidBy || !date || isNaN(amount) || amount <= 0) {
-    alert("⚠ Please fill in all fields correctly!");
-    return;
+  for (let i = 0; i < numPeople; i++) {
+    const participantDiv = document.createElement("div");
+    participantDiv.className = "participant-field";
+    participantDiv.innerHTML = `
+      <input type="text" placeholder="Person ${i + 1} Name" class="participant-name" required />
+      <input type="number" placeholder="Contribution (₹)" class="participant-amount" min="0" step="0.01" required />
+    `;
+    participantsContainer.appendChild(participantDiv);
   }
+}
 
-  if (editExpenseId) {
-    const idx = expenses.findIndex(exp => exp.id === editExpenseId);
-    if (idx >= 0) {
-      expenses[idx] = {
-        id: editExpenseId,
+// ---------- ADD or UPDATE EXPENSE ----------
+if (expenseForm) {
+  expenseForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("title").value.trim();
+    const totalAmount = parseFloat(document.getElementById("totalAmount").value);
+    const numPeople = parseInt(document.getElementById("numPeople").value);
+    const date = document.getElementById("date").value;
+
+    // Validation
+    if (!title || !date || isNaN(totalAmount) || totalAmount <= 0 || !numPeople || numPeople < 1) {
+      alert("⚠ Please fill in all fields correctly!");
+      return;
+    }
+
+    // Collect participants
+    const participants = [];
+    const participantFields = participantsContainer.querySelectorAll(".participant-field");
+    let totalContributions = 0;
+
+    for (let field of participantFields) {
+      const name = field.querySelector(".participant-name").value.trim();
+      const amount = parseFloat(field.querySelector(".participant-amount").value) || 0;
+
+      if (!name) {
+        alert("⚠ Please enter names for all participants!");
+        return;
+      }
+
+      participants.push({ name, contribution: parseFloat(amount.toFixed(2)) });
+      totalContributions += amount;
+    }
+
+    // Validate total contributions match bill amount
+    if (Math.abs(totalContributions - totalAmount) > 0.01) {
+      alert(`⚠ Total contributions (₹${totalContributions.toFixed(2)}) must equal the bill amount (₹${totalAmount.toFixed(2)})!`);
+      return;
+    }
+
+    if (editExpenseId) {
+      const idx = expenses.findIndex(exp => exp.id === editExpenseId);
+      if (idx >= 0) {
+        expenses[idx] = {
+          id: editExpenseId,
+          title,
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          participants,
+          date,
+        };
+      }
+      editExpenseId = null;
+      expenseForm.querySelector("button[type=submit]").textContent = "Add Expense";
+    } else {
+      const expense = {
+        id: Date.now(),
         title,
-        amount: parseFloat(amount.toFixed(2)),
-        paidBy,
+        totalAmount: parseFloat(totalAmount.toFixed(2)),
+        participants,
         date,
       };
+      expenses.push(expense);
     }
-    editExpenseId = null;
-    expenseForm.querySelector("button[type=submit]").textContent = "Add Expense";
-  } else {
-    const expense = {
-      id: Date.now(),
-      title,
-      amount: parseFloat(amount.toFixed(2)),
-      paidBy,
-      date,
-    };
-    expenses.push(expense);
-  }
 
-  saveExpenses();
-  renderExpenses();
-  expenseForm.reset();
-});
+    saveExpenses();
+    renderExpenses();
+    expenseForm.reset();
+    updateParticipantFields(); // Clear participant fields
+  });
+}
 
 // ---------- DRAG AND DROP HANDLERS ----------
 let dragSrcEl = null;
@@ -134,6 +187,8 @@ function handleDragEnd() {
 
 // ---------- RENDER EXPENSES ----------
 function renderExpenses() {
+  if (!expenseList) return;
+
   expenseList.innerHTML = "";
 
   if (expenses.length === 0) {
@@ -147,14 +202,20 @@ function renderExpenses() {
     const li = document.createElement("li");
     li.setAttribute("data-id", exp.id);
     li.setAttribute("draggable", true);
+    li.setAttribute("role", "listitem");
+    li.setAttribute("tabindex", "0");
+
+    // Build participants string
+    const participantsStr = exp.participants.map(p => `${p.name}: ₹${p.contribution.toFixed(2)}`).join(", ");
+
     li.innerHTML = `
       <div>
-        <strong>${exp.title}</strong> - ₹${exp.amount.toFixed(2)}<br>
-        <small>Paid by: ${exp.paidBy} | ${exp.date}</small>
+        <strong>${exp.title}</strong> - ₹${exp.totalAmount.toFixed(2)}<br>
+        <small>Contributions: ${participantsStr} | ${exp.date}</small>
       </div>
       <div>
-        <button class="edit-btn" onclick="startEditExpense(${exp.id})">✏️</button>
-        <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑</button>
+        <button class="edit-btn" role="button" aria-label="Edit expense ${exp.title}" onclick="startEditExpense(${exp.id})">✏️</button>
+        <button class="delete-btn" role="button" aria-label="Delete expense ${exp.title}" onclick="deleteExpense(${exp.id})">🗑</button>
       </div>
     `;
 
@@ -164,6 +225,14 @@ function renderExpenses() {
     li.addEventListener('dragleave', handleDragLeave, false);
     li.addEventListener('drop', handleDrop, false);
     li.addEventListener('dragend', handleDragEnd, false);
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        // Focus the first button (edit) for interaction
+        const editBtn = li.querySelector('.edit-btn');
+        if (editBtn) editBtn.focus();
+      }
+    });
 
     expenseList.appendChild(li);
   });
@@ -177,13 +246,33 @@ function startEditExpense(id) {
   const exp = expenses.find(e => e.id === id);
   if (!exp) return;
 
-  document.getElementById("title").value = exp.title;
-  document.getElementById("amount").value = exp.amount;
-  document.getElementById("paidBy").value = exp.paidBy;
-  document.getElementById("date").value = exp.date;
+  // Check if elements exist before setting values
+  const titleEl = document.getElementById("title");
+  const totalAmountEl = document.getElementById("totalAmount");
+  const numPeopleEl = document.getElementById("numPeople");
+  const dateEl = document.getElementById("date");
+
+  if (titleEl) titleEl.value = exp.title;
+  if (totalAmountEl) totalAmountEl.value = exp.totalAmount;
+  if (numPeopleEl) numPeopleEl.value = exp.participants.length;
+  if (dateEl) dateEl.value = exp.date;
+
+  // Populate participant fields
+  updateParticipantFields();
+  if (participantsContainer) {
+    const participantFields = participantsContainer.querySelectorAll(".participant-field");
+    exp.participants.forEach((participant, index) => {
+      if (participantFields[index]) {
+        participantFields[index].querySelector(".participant-name").value = participant.name;
+        participantFields[index].querySelector(".participant-amount").value = participant.contribution;
+      }
+    });
+  }
 
   editExpenseId = id;
-  expenseForm.querySelector("button[type=submit]").textContent = "Update Expense";
+  if (expenseForm) {
+    expenseForm.querySelector("button[type=submit]").textContent = "Update Expense";
+  }
 }
 
 // ---------- DELETE EXPENSE ----------
@@ -214,11 +303,13 @@ function loadExpenses() {
 
 // ---------- SUMMARY CALCULATION ----------
 function updateSummary() {
-  const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const total = expenses.reduce((sum, exp) => sum + exp.totalAmount, 0);
 
   const spendBy = {};
   expenses.forEach((exp) => {
-    spendBy[exp.paidBy] = (spendBy[exp.paidBy] || 0) + exp.amount;
+    exp.participants.forEach(p => {
+      spendBy[p.name] = (spendBy[p.name] || 0) + p.contribution;
+    });
   });
 
   let highestSpender = "-";
@@ -235,27 +326,34 @@ function updateSummary() {
       ? (total / Object.keys(spendBy).length).toFixed(2)
       : 0;
 
-  document.getElementById("total").textContent = `Total: ₹${total.toFixed(2)}`;
-  document.getElementById("highest").textContent = `Highest Spender: ${highestSpender} (₹${maxSpent.toFixed(2)})`;
-  document.getElementById("average").textContent = `Average per person: ₹${avg}`;
+  const totalEl = document.getElementById("total");
+  const highestEl = document.getElementById("highest");
+  const averageEl = document.getElementById("average");
+
+  if (totalEl) totalEl.textContent = `Total: ₹${total.toFixed(2)}`;
+  if (highestEl) highestEl.textContent = `Highest Spender: ${highestSpender} (₹${maxSpent.toFixed(2)})`;
+  if (averageEl) averageEl.textContent = `Average per person: ₹${avg}`;
 }
 
 // ---------- BALANCE CALCULATION ----------
 function calculateBalances() {
-  const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-
-  const friends = {};
+  // Calculate total spent by each person
+  const totalSpent = {};
   expenses.forEach(exp => {
-    if (!friends[exp.paidBy]) friends[exp.paidBy] = 0;
-    friends[exp.paidBy] += exp.amount;
+    exp.participants.forEach(p => {
+      totalSpent[p.name] = (totalSpent[p.name] || 0) + p.contribution;
+    });
   });
 
-  const numFriends = Object.keys(friends).length;
-  const share = numFriends ? total / numFriends : 0;
+  // Calculate total expenses and equal share
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.totalAmount, 0);
+  const allPeople = Object.keys(totalSpent);
+  const equalShare = allPeople.length > 0 ? totalExpenses / allPeople.length : 0;
 
+  // Calculate balances (positive = should receive, negative = owes)
   const balances = {};
-  for (const friend in friends) {
-    balances[friend] = parseFloat((friends[friend] - share).toFixed(2));
+  for (const person of allPeople) {
+    balances[person] = parseFloat((totalSpent[person] - equalShare).toFixed(2));
   }
 
   return balances;
@@ -264,30 +362,32 @@ function calculateBalances() {
 // ---------- RENDER BALANCES ----------
 function renderBalances() {
   const balancesList = document.getElementById("balances-list");
-  balancesList.innerHTML = "";
+  if (balancesList) {
+    balancesList.innerHTML = "";
 
-  const balances = calculateBalances();
+    const balances = calculateBalances();
 
-  if (Object.keys(balances).length === 0) {
-    balancesList.innerHTML = `<p>No expenses added yet to calculate balances.</p>`;
-    return;
-  }
-
-  for (const friend in balances) {
-    const li = document.createElement("li");
-    const balance = balances[friend];
-    let text = "";
-
-    if (balance > 0) {
-      text = `${friend} should receive ₹${balance}`;
-    } else if (balance < 0) {
-      text = `${friend} owes ₹${Math.abs(balance)}`;
-    } else {
-      text = `${friend} is settled up.`;
+    if (Object.keys(balances).length === 0) {
+      balancesList.innerHTML = `<p>No expenses added yet to calculate balances.</p>`;
+      return;
     }
 
-    li.textContent = text;
-    balancesList.appendChild(li);
+    for (const friend in balances) {
+      const li = document.createElement("li");
+      const balance = balances[friend];
+      let text = "";
+
+      if (balance > 0) {
+        text = `${friend} should receive ₹${balance}`;
+      } else if (balance < 0) {
+        text = `${friend} owes ₹${Math.abs(balance)}`;
+      } else {
+        text = `${friend} is settled up.`;
+      }
+
+      li.textContent = text;
+      balancesList.appendChild(li);
+    }
   }
 }
 
@@ -314,3 +414,9 @@ toggle.addEventListener("change", () => {
 
 // ---------- INIT APP ----------
 loadExpenses();
+
+// Initialize summary and balances on pages that don't have expense list (like summary.html)
+if (!expenseList) {
+  updateSummary();
+  renderBalances();
+}
