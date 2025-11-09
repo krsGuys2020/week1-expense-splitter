@@ -286,6 +286,69 @@ button:hover {
   left: 100%;
 }
 
+/* ---------- PER-EXPENSE BREAKDOWN ---------- */
+.breakdown-section {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #a8edea, #fed6e3, #d299c2, #fef9d7, #a8edea);
+  background-size: 400% 400%;
+  animation: gradientShift 14s ease infinite;
+  padding: 1.2rem;
+  border-radius: 15px;
+  text-align: left;
+  color: #2c3e50;
+  font-weight: 500;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in-out, gradientShift 14s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.breakdown-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.8s;
+}
+
+.breakdown-section:hover::before {
+  left: 100%;
+}
+
+.expense-breakdown-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  border-left: 4px solid #3498db;
+}
+
+.expense-breakdown-item h4 {
+  margin-bottom: 0.5rem;
+  color: #e74c3c;
+  font-size: 1.1rem;
+}
+
+.expense-breakdown-item p {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.expense-breakdown-item ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.expense-breakdown-item li {
+  margin: 4px 0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 /* ---------- BALANCES & SETTLEMENTS ---------- */
 .balances-section {
   margin-top: 2rem;

@@ -42,9 +42,43 @@ if (expenseForm) {
     const numPeople = parseInt(document.getElementById("numPeople").value);
     const date = document.getElementById("date").value;
 
-    // Validation
-    if (!title || !date || isNaN(totalAmount) || totalAmount <= 0 || !numPeople || numPeople < 1) {
-      alert("⚠ Please fill in all fields correctly!");
+    // Enhanced Validation
+    if (!title) {
+      alert("⚠ Please enter an expense title!");
+      return;
+    }
+
+    if (!date) {
+      alert("⚠ Please select a valid date!");
+      return;
+    }
+
+    // Check if date is not in the future
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    if (selectedDate > today) {
+      alert("⚠ Expense date cannot be in the future!");
+      return;
+    }
+
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+      alert("⚠ Please enter a valid total amount greater than 0!");
+      return;
+    }
+
+    if (totalAmount > 1000000) {
+      alert("⚠ Total amount cannot exceed ₹10,00,000!");
+      return;
+    }
+
+    if (!numPeople || numPeople < 1) {
+      alert("⚠ Number of people must be at least 1!");
+      return;
+    }
+
+    if (numPeople > 20) {
+      alert("⚠ Number of people cannot exceed 20!");
       return;
     }
 
@@ -52,6 +86,7 @@ if (expenseForm) {
     const participants = [];
     const participantFields = participantsContainer.querySelectorAll(".participant-field");
     let totalContributions = 0;
+    const participantNames = new Set(); // Track names to prevent duplicates
 
     for (let field of participantFields) {
       const name = field.querySelector(".participant-name").value.trim();
@@ -59,6 +94,28 @@ if (expenseForm) {
 
       if (!name) {
         alert("⚠ Please enter names for all participants!");
+        return;
+      }
+
+      if (name.length < 1) {
+        alert("⚠ Participant names must be at least 1 character long!");
+        return;
+      }
+
+      if (participantNames.has(name.toLowerCase())) {
+        alert(`⚠ Duplicate participant name "${name}" is not allowed within the same expense!`);
+        return;
+      }
+
+      participantNames.add(name.toLowerCase());
+
+      if (amount < 0) {
+        alert("⚠ Participant contributions cannot be negative!");
+        return;
+      }
+
+      if (amount > totalAmount) {
+        alert("⚠ Individual contribution cannot exceed the total expense amount!");
         return;
       }
 
@@ -337,26 +394,67 @@ function updateSummary() {
 
 // ---------- BALANCE CALCULATION ----------
 function calculateBalances() {
-  // Calculate total spent by each person
-  const totalSpent = {};
+  // Calculate balances per expense among only its participants
+  const balances = {};
+
   expenses.forEach(exp => {
+    const numParticipants = exp.participants.length;
+    const equalShare = numParticipants > 0 ? exp.totalAmount / numParticipants : 0;
+
     exp.participants.forEach(p => {
-      totalSpent[p.name] = (totalSpent[p.name] || 0) + p.contribution;
+      const netBalance = p.contribution - equalShare;
+      balances[p.name] = (balances[p.name] || 0) + netBalance;
     });
   });
 
-  // Calculate total expenses and equal share
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.totalAmount, 0);
-  const allPeople = Object.keys(totalSpent);
-  const equalShare = allPeople.length > 0 ? totalExpenses / allPeople.length : 0;
-
-  // Calculate balances (positive = should receive, negative = owes)
-  const balances = {};
-  for (const person of allPeople) {
-    balances[person] = parseFloat((totalSpent[person] - equalShare).toFixed(2));
+  // Round balances to 2 decimal places
+  for (const person in balances) {
+    balances[person] = parseFloat(balances[person].toFixed(2));
   }
 
   return balances;
+}
+
+// ---------- RENDER EXPENSE BREAKDOWN ----------
+function renderExpenseBreakdown() {
+  const breakdownSection = document.getElementById("expense-breakdown");
+  if (breakdownSection) {
+    breakdownSection.innerHTML = "";
+
+    if (expenses.length === 0) {
+      breakdownSection.innerHTML = `<p>No expenses added yet to show breakdown.</p>`;
+      return;
+    }
+
+    expenses.forEach((exp) => {
+      const expDiv = document.createElement("div");
+      expDiv.className = "expense-breakdown-item";
+
+      const numParticipants = exp.participants.length;
+      const equalShare = numParticipants > 0 ? exp.totalAmount / numParticipants : 0;
+
+      let breakdownHTML = `<h4>${exp.title} - ₹${exp.totalAmount.toFixed(2)}</h4>`;
+      breakdownHTML += `<p><strong>Equal share per person: ₹${equalShare.toFixed(2)}</strong></p>`;
+      breakdownHTML += `<ul>`;
+
+      exp.participants.forEach(p => {
+        const netBalance = p.contribution - equalShare;
+        let status = "";
+        if (netBalance > 0) {
+          status = `should receive ₹${netBalance.toFixed(2)}`;
+        } else if (netBalance < 0) {
+          status = `owes ₹${Math.abs(netBalance).toFixed(2)}`;
+        } else {
+          status = `is settled`;
+        }
+        breakdownHTML += `<li>${p.name} paid ₹${p.contribution.toFixed(2)} - ${status}</li>`;
+      });
+
+      breakdownHTML += `</ul>`;
+      expDiv.innerHTML = breakdownHTML;
+      breakdownSection.appendChild(expDiv);
+    });
+  }
 }
 
 // ---------- RENDER BALANCES ----------
@@ -389,6 +487,9 @@ function renderBalances() {
       balancesList.appendChild(li);
     }
   }
+
+  // Also render expense breakdown if on summary page
+  renderExpenseBreakdown();
 }
 
 const toggle = document.getElementById("darkModeToggle");
