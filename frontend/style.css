@@ -1,0 +1,546 @@
+/* ---------- GLOBAL ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #ff9a9e, #fecfef, #a18cd1, #fbc2eb, #a6c1ee, #fdbb2d, #22c1c3, #ffecd2, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff, #5f27cd, #ffecd2);
+  background-size: 600% 600%;
+  animation: gradientShift 20s ease infinite;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* ---------- HEADER ---------- */
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff, #5f27cd);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite, fadeIn 1s ease-in-out;
+  color: white;
+  width: 100%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+  position: relative;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+header p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 1rem;
+}
+
+/* ---------- NAVIGATION ---------- */
+nav {
+  margin-top: 1rem;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.3);
+  font-weight: bold;
+}
+
+/* ---------- MAIN CONTAINER ---------- */
+main {
+  width: 90%;
+  max-width: 600px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  margin-top: 2rem;
+  padding: 2rem;
+  border-radius: 20px;
+  border: 4px solid;
+  border-image: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #feca57, #ff9ff3, #54a0ff) 1;
+  background-clip: padding-box;
+  box-shadow: 0 0 30px rgba(255, 105, 180, 0.4), 0 0 60px rgba(0, 191, 255, 0.3), 0 0 90px rgba(255, 215, 0, 0.2);
+  animation: fadeIn 1s ease-in-out, glowPulse 4s ease-in-out infinite alternate;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* ---------- FORM SECTION ---------- */
+.form-section h2 {
+  text-align: center;
+  color: #2575fc;
+  margin-bottom: 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 5px transparent;
+}
+
+input:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.8), 0 0 30px rgba(78, 205, 196, 0.6), 0 0 45px rgba(255, 215, 0, 0.4);
+  outline: none;
+  transform: scale(1.03);
+}
+
+button {
+  padding: 12px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #feca57);
+  background-size: 300% 300%;
+  animation: gradientShift 3s ease infinite;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.8), 0 4px 15px rgba(78, 205, 196, 0.6);
+}
+
+/* ---------- EXPENSE LIST ---------- */
+.list-section {
+  margin-top: 2rem;
+}
+
+.list-section h2 {
+  text-align: center;
+  color: #6a11cb;
+  margin-bottom: 1rem;
+}
+
+#expense-list {
+  list-style: none;
+}
+
+#expense-list li {
+  background: linear-gradient(90deg, #ff9a9e, #fecfef, #a18cd1, #fbc2eb, #a6c1ee, #fdbb2d, #22c1c3);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #222;
+  box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.2s ease;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s forwards, gradientShift 10s ease infinite;
+  will-change: transform, box-shadow, opacity, border;
+  position: relative;
+  overflow: hidden;
+}
+
+#expense-list li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+#expense-list li:hover::before {
+  left: 100%;
+}
+
+#expense-list li:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+/* Highlight border for drop target */
+#expense-list li.over,
+#expense-list li[style*="border-top"],
+#expense-list li[style*="border-bottom"] {
+  transition: border 0.2s ease;
+}
+
+/* ---------- DELETE BUTTON ---------- */
+.delete-btn {
+  background: #ff5e62;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+.delete-btn:hover {
+  background: #ff3b3f;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255, 94, 98, 0.7);
+}
+
+.edit-btn {
+  background: #4caf50;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-right: 8px;
+  transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+.edit-btn:hover {
+  background: #45a049;
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+}
+
+/* ---------- SUMMARY ---------- */
+.summary-section {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #ff9a9e, #fecfef, #a18cd1, #fbc2eb, #a6c1ee);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  padding: 1.2rem;
+  border-radius: 15px;
+  text-align: center;
+  color: #0f3057;
+  font-weight: 500;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in-out, gradientShift 12s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.8s;
+}
+
+.summary-section:hover::before {
+  left: 100%;
+}
+
+/* ---------- PER-EXPENSE BREAKDOWN ---------- */
+.breakdown-section {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #a8edea, #fed6e3, #d299c2, #fef9d7, #a8edea);
+  background-size: 400% 400%;
+  animation: gradientShift 14s ease infinite;
+  padding: 1.2rem;
+  border-radius: 15px;
+  text-align: left;
+  color: #2c3e50;
+  font-weight: 500;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in-out, gradientShift 14s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.breakdown-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.8s;
+}
+
+.breakdown-section:hover::before {
+  left: 100%;
+}
+
+.expense-breakdown-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  border-left: 4px solid #3498db;
+}
+
+.expense-breakdown-item h4 {
+  margin-bottom: 0.5rem;
+  color: #e74c3c;
+  font-size: 1.1rem;
+}
+
+.expense-breakdown-item p {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.expense-breakdown-item ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.expense-breakdown-item li {
+  margin: 4px 0;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- BALANCES & SETTLEMENTS ---------- */
+.balances-section {
+  margin-top: 2rem;
+  background: linear-gradient(90deg, #fdbb2d, #22c1c3, #ffecd2, #ff9a9e, #fecfef);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+  padding: 1.2rem;
+  border-radius: 15px;
+  text-align: center;
+  color: #1a237e;
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 1s ease-in-out, gradientShift 10s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.balances-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.8s;
+}
+
+.balances-section:hover::before {
+  left: 100%;
+}
+
+.balances-section ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.balances-section li {
+  margin: 8px 0;
+}
+
+/* Toggle switch styling */
+.switch {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196f3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Dark mode styles */
+body.dark-mode {
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #e94560, #533483, #1a1a2e, #16213e, #0f3460);
+  background-size: 600% 600%;
+  animation: gradientShift 25s ease infinite;
+  color: #eeeeee;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+body.dark-mode header {
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff, #5f27cd);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  color: #eee;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+body.dark-mode main {
+  background: rgba(30, 30, 30, 0.95);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 105, 180, 0.3), 0 0 90px rgba(0, 191, 255, 0.2);
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* ---------- FOOTER ---------- */
+footer {
+  margin-top: auto;
+  padding: 1rem;
+  text-align: center;
+  color: white;
+  background: linear-gradient(90deg, #6a11cb, #2575fc);
+  width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.3), 0 0 40px rgba(0, 191, 255, 0.2), 0 0 60px rgba(255, 215, 0, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(255, 105, 180, 0.5), 0 0 60px rgba(0, 191, 255, 0.4), 0 0 90px rgba(255, 215, 0, 0.2);
+  }
+}
+
+/* ---------- FOCUS STYLES ---------- */
+input:focus,
+button:focus,
+#expense-list li:focus {
+  outline: 2px solid #ff6b6b;
+  outline-offset: 2px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 500px) {
+  main {
+    padding: 1.2rem;
+  }
+  header h1 {
+    font-size: 2rem;
+  }
+  input,
+  button {
+    font-size: 0.95rem;
+  }
+  #expense-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .delete-btn {
+    align-self: flex-end;
+    margin-top: 5px;
+  }
+}
