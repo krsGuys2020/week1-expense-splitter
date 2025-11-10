@@ -13,6 +13,8 @@ if (numPeopleInput) {
 // ---------- INITIALIZE ----------
 let expenses = [];
 let editExpenseId = null; // Global variable to track editing state
+let deletedExpenses = []; // Store recently deleted expenses for undo
+let undoTimeout = null; // Timeout for auto-clearing undo
 
 // ---------- DYNAMIC PARTICIPANT FIELDS ----------
 function updateParticipantFields() {
@@ -288,6 +290,12 @@ function renderExpenses() {
         // Focus the first button (edit) for interaction
         const editBtn = li.querySelector('.edit-btn');
         if (editBtn) editBtn.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveExpenseUp(exp.id);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        moveExpenseDown(exp.id);
       }
     });
 
@@ -337,9 +345,96 @@ function deleteExpense(id) {
   const confirmDelete = confirm("🗑 Are you sure you want to delete this expense?");
   if (!confirmDelete) return;
 
+  // Find and store the deleted expense for undo
+  const deletedExpense = expenses.find(exp => exp.id === id);
+  if (deletedExpense) {
+    deletedExpenses.push(deletedExpense);
+    // Clear previous undo timeout
+    if (undoTimeout) clearTimeout(undoTimeout);
+    // Set new timeout to auto-clear undo after 10 seconds
+    undoTimeout = setTimeout(() => {
+      deletedExpenses = [];
+    }, 10000);
+  }
+
   expenses = expenses.filter((exp) => exp.id !== id);
   saveExpenses();
   renderExpenses();
+
+  // Show undo notification
+  showUndoNotification();
+}
+
+// ---------- UNDO DELETE ----------
+function undoDelete() {
+  if (deletedExpenses.length > 0) {
+    const lastDeleted = deletedExpenses.pop();
+    expenses.push(lastDeleted);
+    saveExpenses();
+    renderExpenses();
+    // Clear timeout since undo was used
+    if (undoTimeout) {
+      clearTimeout(undoTimeout);
+      undoTimeout = null;
+    }
+    hideUndoNotification();
+  }
+}
+
+// ---------- SHOW UNDO NOTIFICATION ----------
+function showUndoNotification() {
+  let notification = document.getElementById("undo-notification");
+  if (!notification) {
+    notification = document.createElement("div");
+    notification.id = "undo-notification";
+    notification.innerHTML = `
+      <span>Expense deleted. </span>
+      <button onclick="undoDelete()" style="background: #4caf50; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Undo</button>
+      <span> (Auto-dismiss in 10s)</span>
+    `;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      font-size: 14px;
+    `;
+    document.body.appendChild(notification);
+  }
+  notification.style.display = "block";
+}
+
+// ---------- HIDE UNDO NOTIFICATION ----------
+function hideUndoNotification() {
+  const notification = document.getElementById("undo-notification");
+  if (notification) {
+    notification.style.display = "none";
+  }
+}
+
+// ---------- MOVE EXPENSE UP ----------
+function moveExpenseUp(id) {
+  const index = expenses.findIndex(exp => exp.id === id);
+  if (index > 0) {
+    [expenses[index], expenses[index - 1]] = [expenses[index - 1], expenses[index]];
+    saveExpenses();
+    renderExpenses();
+  }
+}
+
+// ---------- MOVE EXPENSE DOWN ----------
+function moveExpenseDown(id) {
+  const index = expenses.findIndex(exp => exp.id === id);
+  if (index >= 0 && index < expenses.length - 1) {
+    [expenses[index], expenses[index + 1]] = [expenses[index + 1], expenses[index]];
+    saveExpenses();
+    renderExpenses();
+  }
 }
 
 // ---------- LOCAL STORAGE ----------
@@ -399,18 +494,16 @@ function calculateBalances() {
 
   expenses.forEach(exp => {
     const numParticipants = exp.participants.length;
-    const equalShare = numParticipants > 0 ? exp.totalAmount / numParticipants : 0;
+    // Calculate equal share with precise rounding to avoid floating-point errors
+    const equalShare = numParticipants > 0 ? Math.round((exp.totalAmount / numParticipants) * 100) / 100 : 0;
 
     exp.participants.forEach(p => {
-      const netBalance = p.contribution - equalShare;
-      balances[p.name] = (balances[p.name] || 0) + netBalance;
+      // Calculate net balance with precise rounding
+      const netBalance = Math.round((p.contribution - equalShare) * 100) / 100;
+      // Accumulate with precise rounding to prevent floating-point accumulation errors
+      balances[p.name] = Math.round(((balances[p.name] || 0) + netBalance) * 100) / 100;
     });
   });
-
-  // Round balances to 2 decimal places
-  for (const person in balances) {
-    balances[person] = parseFloat(balances[person].toFixed(2));
-  }
 
   return balances;
 }
